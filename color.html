@@ -95,9 +95,9 @@ function setLevel(n) {
 async function fetchValue() {
   try {
     const res = await fetch(
-      `https://app.e-ra.io/api/v2/gateways/${GATEWAY_ID}/virtual-pins/${PIN}`,
-      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
-    );
+  `https://app.e-ra.io/api/v2/gateways/${GATEWAY_ID}/virtual-pins/${PIN}`,
+  { headers: { 'Authorization': `ERa ${TOKEN}` } }
+);
     const data = await res.json();
     const val = parseInt(data.value) || 0;
     setLevel(val);
