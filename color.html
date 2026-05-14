@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fire Warning Widget</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: transparent;
+    font-family: Arial, sans-serif;
+  }
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .circle-wrap { position: relative; width: 200px; height: 200px; }
+  .center-text {
+    position: absolute; top: 52%; left: 50%;
+    transform: translate(-50%, -50%); text-align: center;
+  }
+  .big-num { font-size: 52px; font-weight: 500; line-height: 1; transition: color 0.4s; }
+  .sub-num { font-size: 13px; color: #888; margin-top: 4px; }
+  .label-status {
+    font-size: 14px; font-weight: 500;
+    padding: 5px 18px; border-radius: 8px; transition: all 0.4s;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="circle-wrap">
+    <svg width="200" height="200" viewBox="0 0 200 200">
+      <g id="segments"></g>
+    </svg>
+    <div class="center-text">
+      <div class="big-num" id="bigNum">0</div>
+      <div class="sub-num">/ 5 sensor</div>
+    </div>
+  </div>
+  <div class="label-status" id="statusLabel"
+    style="background:#eee; color:#888;">Bình thường</div>
+</div>
+
+<script>
+const TOKEN = "YOUR_ERA_TOKEN"; // <-- thay vào đây
+const PIN = "V6";
+const GATEWAY_ID = "YOUR_GATEWAY_ID"; // <-- thay vào đây
+
+const LEVELS = [
+  { color:'#9E9E9E', bg:'#EEEEEE', text:'#616161', label:'Bình thường' },
+  { color:'#4CAF50', bg:'#E8F5E9', text:'#2E7D32', label:'Cảnh báo nhẹ' },
+  { color:'#FFC107', bg:'#FFF8E1', text:'#F57F17', label:'Chú ý' },
+  { color:'#FFC107', bg:'#FFF8E1', text:'#F57F17', label:'Nguy hiểm' },
+  { color:'#FF5722', bg:'#FBE9E7', text:'#BF360C', label:'Nguy hiểm cao' },
+  { color:'#F44336', bg:'#FFEBEE', text:'#B71C1C', label:'KHẨN CẤP!' },
+];
+
+const cx=100, cy=100, r=80, strokeW=16;
+const totalSegs=5, startAngle=210, gap=6, sweep=300;
+const segAngle=(sweep - gap*(totalSegs-1))/totalSegs;
+
+function polarToXY(deg, radius) {
+  const rad = (deg-90)*Math.PI/180;
+  return { x: cx+radius*Math.cos(rad), y: cy+radius*Math.sin(rad) };
+}
+function describeArc(startDeg, sweepDeg) {
+  const s=polarToXY(startDeg,r), e=polarToXY(startDeg+sweepDeg,r);
+  return `M ${s.x} ${s.y} A ${r} ${r} 0 ${sweepDeg>180?1:0} 1 ${e.x} ${e.y}`;
+}
+
+const g = document.getElementById('segments');
+const paths = [];
+for(let i=0;i<totalSegs;i++){
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d', describeArc(startAngle+i*(segAngle+gap), segAngle));
+  p.setAttribute('fill','none');
+  p.setAttribute('stroke','#e0e0e0');
+  p.setAttribute('stroke-width', strokeW);
+  p.setAttribute('stroke-linecap','round');
+  p.style.transition='stroke 0.4s ease';
+  g.appendChild(p); paths.push(p);
+}
+
+function setLevel(n) {
+  const c = LEVELS[Math.min(n,5)];
+  paths.forEach((p,i) => p.setAttribute('stroke', i<n ? c.color : '#e0e0e0'));
+  const num = document.getElementById('bigNum');
+  num.textContent = n;
+  num.style.color = n===0 ? '#9E9E9E' : c.color;
+  const lbl = document.getElementById('statusLabel');
+  lbl.textContent = c.label;
+  lbl.style.background = c.bg;
+  lbl.style.color = c.text;
+}
+
+async function fetchValue() {
+  try {
+    const res = await fetch(
+      `https://app.e-ra.io/api/v2/gateways/${GATEWAY_ID}/virtual-pins/${PIN}`,
+      { headers: { 'Authorization': `Bearer ${TOKEN}` } }
+    );
+    const data = await res.json();
+    const val = parseInt(data.value) || 0;
+    setLevel(val);
+  } catch(e) {
+    console.error('Lỗi fetch ERA:', e);
+  }
+}
+
+setLevel(0);
+fetchValue();
+setInterval(fetchValue, 2000);
+</script>
+</body>
+</html>
