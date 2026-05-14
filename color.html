@@ -41,9 +41,10 @@
 </div>
 
 <script>
-const TOKEN = "d197f003-e50a-4426-8b92-769a81251f6e"; // <-- thay vào đây
-const PIN = "6";
-const GATEWAY_ID = "18976"; // <-- thay vào đây
+const TOKEN = "d197f003-e50a-4426-8b92-769a81251f6e";
+const GATEWAY_ID = "18976";
+const DEVICE_ID = "25290";
+const PIN = "6"; // <-- thay vào đây
 
 const LEVELS = [
   { color:'#9E9E9E', bg:'#EEEEEE', text:'#616161', label:'Bình thường' },
@@ -95,9 +96,9 @@ function setLevel(n) {
 async function fetchValue() {
   try {
     const res = await fetch(
-      `https://app.e-ra.io/api/v2/gateways/${GATEWAY_ID}/virtual-pins/${PIN}`,
+     `https://backend.eoh.io/iot/modules/arduino/gateways/${GATEWAY_ID}/devices/${DEVICE_ID}/virtual-pins/${PIN}/`,
       { headers: { 
-          'Authorization': `Bearer ${TOKEN}`,
+          'Authorization': `Token ${TOKEN}`,
           'Content-Type': 'application/json'
         } 
       }
