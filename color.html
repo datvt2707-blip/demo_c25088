@@ -41,11 +41,6 @@
 </div>
 
 <script>
-const TOKEN = "d197f003-e50a-4426-8b92-769a81251f6e";
-const GATEWAY_ID = "18976";
-const DEVICE_ID = "25290";
-const PIN = "6"; // <-- thay vào đây
-
 const LEVELS = [
   { color:'#9E9E9E', bg:'#EEEEEE', text:'#616161', label:'Bình thường' },
   { color:'#4CAF50', bg:'#E8F5E9', text:'#2E7D32', label:'Cảnh báo nhẹ' },
@@ -93,26 +88,25 @@ function setLevel(n) {
   lbl.style.color = c.text;
 }
 
-async function fetchValue() {
+// Nhận data từ ERA IFrame With Config
+window.addEventListener('message', function(event) {
   try {
-    const res = await fetch(
-     `https://backend.eoh.io/iot/modules/arduino/gateways/${GATEWAY_ID}/devices/${DEVICE_ID}/virtual-pins/${PIN}/`,
-      { headers: { 
-          'Authorization': `Token ${TOKEN}`,
-          'Content-Type': 'application/json'
-        } 
-      }
-    );
-    const text = await res.text();
-    console.log('ERA response:', text);
-  } catch(e) {
-    console.error('Lỗi:', e);
-  }
-}
+    const data = event.data;
+    if (data && data.warningLevel !== undefined) {
+      setLevel(parseInt(data.warningLevel) || 0);
+    }
+    // ERA có thể gửi dạng array
+    if (Array.isArray(data)) {
+      data.forEach(item => {
+        if (item.configName === 'warningLevel' || item.title === 'warningLevel') {
+          setLevel(parseInt(item.value) || 0);
+        }
+      });
+    }
+  } catch(e) {}
+});
 
 setLevel(0);
-fetchValue();
-setInterval(fetchValue, 2000);
 </script>
 </body>
 </html>
